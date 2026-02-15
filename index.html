@@ -9,27 +9,59 @@
 body {
     font-family: 'Cinzel', serif;
     text-align: center;
+    background: radial-gradient(circle at top, #2b1055, #000000);
     color: #f5d742;
     padding: 40px;
-    background-color: black;
-    background-image: 
-        url(https://static.wikia.nocookie.net/mtgsalvation_gamepedia/images/1/13/Elesh_Norn.jpg/revision/latest?cb=20210216024711),
-        url(https://static.wikia.nocookie.net/mtgsalvation_gamepedia/images/5/5e/Stf138_art1.jpg/revision/latest?cb=20201224143755),
-        url(https://static.wikia.nocookie.net/mtgsalvation_gamepedia/images/4/45/Vorinclex-voice-of-hunger.jpg/revision/latest?cb=20201224142920);
-    background-position: left center, center center, right center;
-    background-repeat: no-repeat;
-    background-size: 30%, 35%, 30%;
-    background-attachment: fixed;
 }
 
-body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.75);
-    z-index: -1;
+h1 {
+    font-size: 36px;
+    margin-bottom: 30px;
 }
 
+input {
+    padding: 10px;
+    font-size: 16px;
+    width: 250px;
+    border-radius: 6px;
+    border: none;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background: linear-gradient(45deg, #d4af37, #8b0000);
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 6px;
+    margin: 5px;
+}
+
+button:hover {
+    opacity: 0.85;
+}
+
+.counter {
+    font-size: 24px;
+    margin-top: 30px;
+}
+
+.admin-panel {
+    margin-top: 50px;
+    padding: 20px;
+    background: rgba(0,0,0,0.6);
+    border-radius: 10px;
+    display: none;
+}
+
+.player-list {
+    margin-top: 15px;
+    text-align: left;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+}
 </style>
 
 </head>
@@ -89,47 +121,8 @@ const ADMIN_PASSWORD = "Commander2026"; // ← HIER kannst du dein Passwort änd
 
 window.register = function() {
     const name = document.getElementById("nameInput").value.trim();
-    if (!name) {
-        alert("Bitte Namen eingeben!");
-        return;
-    }
+    if (!name) return alert("Bitte Namen eingeben!");
 
-    const anmeldungenRef = ref(database, 'anmeldungen');
-
-    onValue(anmeldungenRef, (snapshot) => {
-        const data = snapshot.val();
-        const count = data ? Object.keys(data).length : 0;
-
-        // Prüfen ob Event voll
-        if (count >= MAX_PLAYERS) {
-            document.getElementById("fullMessage").innerText =
-            "Tut uns leid, unsere Magiereserven sind leider schon voll.";
-            return;
-        }
-
-        // Prüfen auf doppelte Namen (case insensitive)
-        if (data) {
-            const nameExists = Object.values(data).some(player =>
-                player.name.toLowerCase() === name.toLowerCase()
-            );
-
-            if (nameExists) {
-                alert("Dieser Name wurde bereits beschworen! Bitte wähle einen anderen.");
-                return;
-            }
-        }
-
-        // Speichern
-        push(anmeldungenRef, {
-            name: name,
-            timestamp: Date.now()
-        });
-
-        document.getElementById("nameInput").value = "";
-
-    }, { onlyOnce: true });
-};
-    
     const anmeldungenRef = ref(database, 'anmeldungen');
     onValue(anmeldungenRef, (snapshot) => {
         const data = snapshot.val();
@@ -193,5 +186,3 @@ window.resetEvent = function() {
 
 </body>
 </html>
-
-
