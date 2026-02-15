@@ -7,49 +7,101 @@
 
 <style>
 body {
-    font-family: Arial;
+    font-family: 'Cinzel', serif;
     text-align: center;
-    background: #121212;
-    color: white;
+    background: radial-gradient(circle at top, #2b1055, #000000);
+    color: #f5d742;
     padding: 40px;
 }
+
+h1 {
+    font-size: 36px;
+    margin-bottom: 30px;
+}
+
 input {
     padding: 10px;
     font-size: 16px;
     width: 250px;
+    border-radius: 6px;
+    border: none;
 }
+
 button {
     padding: 10px 20px;
     font-size: 16px;
-    background: #4CAF50;
+    background: linear-gradient(45deg, #d4af37, #8b0000);
     border: none;
     color: white;
     cursor: pointer;
+    border-radius: 6px;
+    margin: 5px;
 }
+
+button:hover {
+    opacity: 0.85;
+}
+
 .counter {
     font-size: 24px;
     margin-top: 30px;
+}
+
+.admin-panel {
+    margin-top: 50px;
+    padding: 20px;
+    background: rgba(0,0,0,0.6);
+    border-radius: 10px;
+    display: none;
+}
+
+.player-list {
+    margin-top: 15px;
+    text-align: left;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
 }
 </style>
 
 </head>
 <body>
 
-<h1>Magic: The Gathering @ The Home of Boxing</h1>
+<h1>⚔ Commander Event Anmeldung ⚔</h1>
 
+<div id="registrationSection">
 <input type="text" id="nameInput" placeholder="Dein Name">
 <br><br>
 <button onclick="register()">Jetzt Anmelden</button>
 
 <div class="counter">
-An der Magie nehmen bereits teil: <span id="count">0</span> Spieler
+Bereits beschworene Planeswalker: <span id="count">0</span> / 12
+</div>
+
+<p id="fullMessage" style="color:#ff4444; font-weight:bold;"></p>
+</div>
+
+<hr style="margin:50px 0;">
+
+<button onclick="showAdminLogin()">🔒 Admin Login</button>
+
+<div id="adminLogin" style="display:none; margin-top:20px;">
+<input type="password" id="adminPassword" placeholder="Admin Passwort">
+<br><br>
+<button onclick="loginAdmin()">Login</button>
+</div>
+
+<div class="admin-panel" id="adminPanel">
+<h2>Admin Panel</h2>
+<div class="player-list" id="playerList"></div>
+<br>
+<button onclick="resetEvent()">Event Zurücksetzen</button>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-/* DEIN FIREBASE CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyCicFeRvQ31WMA2kH7o2gXHsZESrYIp2vA",
   authDomain: "commander-event.firebaseapp.com",
@@ -64,31 +116,73 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 
+const MAX_PLAYERS = 12;
+const ADMIN_PASSWORD = "Commander2026"; // ← HIER kannst du dein Passwort ändern
+
 window.register = function() {
-    const name = document.getElementById("nameInput").value;
-    if (name.trim() === "") {
-        alert("Bitte Namen eingeben!");
-        return;
-    }
+    const name = document.getElementById("nameInput").value.trim();
+    if (!name) return alert("Bitte Namen eingeben!");
 
-    push(ref(database, 'anmeldungen'), {
-        name: name,
-        timestamp: Date.now()
-    });
+    const anmeldungenRef = ref(database, 'anmeldungen');
+    onValue(anmeldungenRef, (snapshot) => {
+        const data = snapshot.val();
+        const count = data ? Object.keys(data).length : 0;
 
-    document.getElementById("nameInput").value = "";
-}
+        if (count >= MAX_PLAYERS) {
+            document.getElementById("fullMessage").innerText =
+            "Tut uns leid, unsere Magiereserven sind leider schon voll.";
+            return;
+        }
+
+        push(anmeldungenRef, {
+            name: name,
+            timestamp: Date.now()
+        });
+
+        document.getElementById("nameInput").value = "";
+    }, { onlyOnce: true });
+};
 
 const anmeldungenRef = ref(database, 'anmeldungen');
 onValue(anmeldungenRef, (snapshot) => {
     const data = snapshot.val();
     const count = data ? Object.keys(data).length : 0;
+
     document.getElementById("count").innerText = count;
+
+    if (count >= MAX_PLAYERS) {
+        document.getElementById("fullMessage").innerText =
+        "Tut uns leid, unsere Magiereserven sind leider schon voll.";
+    }
+
+    const listDiv = document.getElementById("playerList");
+    listDiv.innerHTML = "";
+    if (data) {
+        Object.values(data).forEach(player => {
+            listDiv.innerHTML += "• " + player.name + "<br>";
+        });
+    }
 });
+
+window.showAdminLogin = function() {
+    document.getElementById("adminLogin").style.display = "block";
+};
+
+window.loginAdmin = function() {
+    const pw = document.getElementById("adminPassword").value;
+    if (pw === ADMIN_PASSWORD) {
+        document.getElementById("adminPanel").style.display = "block";
+    } else {
+        alert("Falsches Passwort!");
+    }
+};
+
+window.resetEvent = function() {
+    if (confirm("Wirklich alle Anmeldungen löschen?")) {
+        remove(ref(database, 'anmeldungen'));
+    }
+};
 </script>
 
 </body>
 </html>
-
-
-
